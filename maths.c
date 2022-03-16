@@ -63,3 +63,21 @@ void *vec3f_set(f32 dest[3], f32 x, f32 y, f32 z) {
     dest[2] = z;
     return dest; //! warning: function returns address of local variable
 }
+
+s32 approach_s32(s32 current, s32 target, s32 inc, s32 dec) {
+    //! If target is close to the max or min s32, then it's possible to overflow
+    // past it without stopping.
+
+    if (current < target) {
+        current += inc;
+        if (current > target) {
+            current = target;
+        }
+    } else {
+        current -= dec;
+        if (current < target) {
+            current = target;
+        }
+    }
+    return current;
+}

@@ -61,7 +61,9 @@ struct MarioState {
     struct Surface *floor;
     f32 floorHeight;
     s16 floorAngle;
+    s16 waterLevel;
     s16 faceAngle[3];
+    s16 angleVel[3];
     f32 pos[3];
     f32 vel[3];
     struct Controller *controller;
