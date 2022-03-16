@@ -28,23 +28,23 @@ int main() {
     //! Defining structs
     struct MarioState *m; m = malloc(sizeof(struct MarioState));
     struct Surface *floorList[numFlos]; struct Surface *ceilingList[numCeils];
-    struct Surface *surface;
+    struct Surface *surface; struct Surface *ceiling;
     struct Controller *controller;
-    //surface = read_surface_data((s16 ***) **triList, 0);
+    //surface = init_surface_data((s16 ***) **triList, 0);
 
     //! add tris to list
 
     *floList[0] = *flo1;// *triList[1] = *tri2;
-    for (int i = 0; i < numFlos; i++) {
+    for (s16 i = 0; i < numFlos; i++) {
 
         //numSurfaces = sizeof vertexData / sizeof *vertexData;
-        floorList[i] = read_surface_data((s16 ***) **floList, i);
+        floorList[i] = init_surface_data((s16 ***) **floList, i);
 
         //surface->type = surfaceType;
     }
-    for (int i = 0; i< numCeils; i++) {
+    for (s16 i = 0; i < numCeils; i++) {
 
-        ceilingList[i] = read_surface_data((s16 ***) **floList, i);
+        ceilingList[i] = init_ceil_data((s16 ***) **floList, i);
 
     }//m->floor = surface;
 
@@ -64,9 +64,12 @@ int main() {
 
 
         //printf("%f\n", m->pos[0]);
+        f32 ceilHeight;
         surface = check_mario_surface(mPos, floorList, numFlos);
+        ceiling = check_mario_ceil(mPos, ceilingList, numCeils, &ceilHeight);
         //printf("%i\n", ptInTriangle(m->pos, surface->vertex1, surface->vertex2, surface->vertex3));
         m->floor = surface;
+        m->ceil = ceiling;
         //printf("%f\n", m->intendedMag);
         printf("%f\n", m->pos[2]);
         //printf("%i\n", m->floor->vertex2[0]);

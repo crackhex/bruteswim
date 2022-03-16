@@ -16,3 +16,4 @@ void update_mario_joystick_inputs(struct MarioState *m) {
         m->intendedYaw = m->faceAngle[1];
     }
 }
+

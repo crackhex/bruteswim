@@ -15,7 +15,7 @@ s16 ptInTriangle(f32 p[3], s16 p0[3], s16 p1[3], s16 p2[3]) {
     return FALSE;
 }
 
-struct Surface * read_surface_data(s16 vertexData[][3][3], s16 triNum) {
+struct Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
     struct Surface *surface = malloc(sizeof(struct Surface));
     s32 x1, y1, z1;
     s32 x2, y2, z2;
@@ -93,7 +93,7 @@ struct Surface * read_surface_data(s16 vertexData[][3][3], s16 triNum) {
 
 }
 
-struct Surface * read_ceil_data(s16 vertexData[][3][3], s16 triNum) {
+struct Surface * init_ceil_data(s16 vertexData[][3][3], s16 triNum) {
     struct Surface *surf = malloc(sizeof(struct Surface));
     struct Surface *ceil = NULL;
     ceil = NULL;
@@ -149,6 +149,35 @@ struct Surface * check_mario_surface(f32 mPos[3], struct Surface **triList, s16 
     return surface;
 
 }
+struct Surface * check_mario_ceil(f32 mPos[3], struct Surface **triList, s16 numTris, f32 *pheight) {
+    s16 i;
+    f32 nx, ny, nz;
+    f32 oo;
+    f32 height;
+    //printf("%i\n", numTris);
+    struct Surface *surface;
+    for (i = 0; i < numTris; i++) {
+        surface = triList[i];
+        nx = surface->normal.x;
+        ny = surface->normal.y;
+        nz = surface->normal.z;
+        oo = surface->originOffset;
+        height = -((f32) mPos[0] * nx + nz * (f32) mPos[2] + oo) / ny;
+        //numSurfaces = sizeof vertexData / sizeof *vertexData;
+        if (ptInTriangle( mPos, surface->vertex1, surface->vertex2, surface->vertex3) == 0) {
+            //printf("%i\n", i);
+            continue;
+        }
+        if (mPos[1] - (height - -78.0f) > 0.0f) {
+            continue;
+        }
+        return surface;
+        //surface->type = surfaceType;
+    }
+    *pheight = height;
+    return surface;
+
+}
 f32 find_floor_height(struct Surface *surf, s32 x, s32 y, s32 z) {
     f32 nx, ny, nz;
     f32 oo;
@@ -161,4 +190,5 @@ f32 find_floor_height(struct Surface *surf, s32 x, s32 y, s32 z) {
     height = -((f32) x * nx + nz * (f32) z + oo) / ny;
     return height;
 }
+
 

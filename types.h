@@ -56,6 +56,8 @@ struct MarioState {
     f32 intendedMag;
     f32 slideVelX;
     f32 slideVelZ;
+    struct Surface *wall;
+    struct Surface *ceil;
     struct Surface *floor;
     f32 floorHeight;
     s16 floorAngle;
