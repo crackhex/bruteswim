@@ -1,6 +1,8 @@
 #include "swimming.h"
+#include "surface.h"
 #include "types.h"
 #include "maths.h"
+
 
 s32 swimming_near_surface(struct MarioState *m) {
 

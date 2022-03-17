@@ -133,62 +133,57 @@ struct Surface * init_ceil_data(s16 vertexData[][3][3], s16 triNum) {
     surf->upperY = maxY + 5;*/
 }
 
-struct Surface * check_mario_surface(f32 mPos[3], struct Surface **triList, s16 numTris) {
-    s16 i;
+f32 check_mario_floor(f32 mPos[3], struct Surface **triList, s16 numTris, struct Surface **pfloor) {
+    f32 height = CELL_HEIGHT_LIMIT;
     //printf("%i\n", numTris);
-    struct Surface *surface;
-    for (i = 0; i < numTris; i++) {
-        surface = triList[i];
+    struct Surface *floor;
+    for (s16 i = 0; i < numTris; i++) {
+        floor = triList[i];
         //numSurfaces = sizeof vertexData / sizeof *vertexData;
-        if (ptInTriangle( mPos, surface->vertex1, surface->vertex2, surface->vertex3) == 1) {
+        if (ptInTriangle( mPos, floor->vertex1, floor->vertex2, floor->vertex3) == 0) {
             //printf("%i\n", i);
-            return surface;
+            continue;
         }
+        height = -((f32) mPos[0] * floor->normal.x + floor->normal.z * (f32) mPos[2] + floor->originOffset) / floor->normal.y;
+        return height;
         //surface->type = surfaceType;
     }
-    return surface;
+    return height;
 
 }
-struct Surface * check_mario_ceil(f32 mPos[3], struct Surface **triList, s16 numTris, f32 *pheight) {
+f32 check_mario_ceil(f32 mPos[3], struct Surface **triList, s16 numTris, struct Surface  **pceil) {
     s16 i;
-    f32 nx, ny, nz;
-    f32 oo;
-    f32 height;
+    f32 height; height = CELL_HEIGHT_LIMIT;
     //printf("%i\n", numTris);
     struct Surface *surface;
     for (i = 0; i < numTris; i++) {
         surface = triList[i];
-        nx = surface->normal.x;
-        ny = surface->normal.y;
-        nz = surface->normal.z;
-        oo = surface->originOffset;
-        height = -((f32) mPos[0] * nx + nz * (f32) mPos[2] + oo) / ny;
         //numSurfaces = sizeof vertexData / sizeof *vertexData;
         if (ptInTriangle( mPos, surface->vertex1, surface->vertex2, surface->vertex3) == 0) {
             //printf("%i\n", i);
             continue;
         }
+        height = -((f32) mPos[0] * surface->normal.x + surface->normal.z * (f32) mPos[2] + surface->originOffset) / surface->normal.y;
         if (mPos[1] - (height - -78.0f) > 0.0f) {
             continue;
         }
-        return surface;
+        *pceil = surface;
+        return height;
         //surface->type = surfaceType;
     }
-    *pheight = height;
-    return surface;
+    return height;
 
 }
-f32 find_floor_height(struct Surface *surf, s32 x, s32 y, s32 z) {
-    f32 nx, ny, nz;
-    f32 oo;
-    f32 height;
+f32 find_tri_height(struct Surface *surf, s32 x, s32 y, s32 z) {
 
-    nx = surf->normal.x;
-    ny = surf->normal.y;
-    nz = surf->normal.z;
-    oo = surf->originOffset;
-    height = -((f32) x * nx + nz * (f32) z + oo) / ny;
+    f32 height;
+    height = -((f32) x * surf->normal.x + surf->normal.z * (f32) z + surf->originOffset) / surf->normal.y;
     return height;
+}
+
+f32 vec3f_find_ceil(pos[3], f32 height, struct Surface **ceil) {
+
+    return find_tri_height(*ceil, pos[0], height + 80.0f, pos[2]);
 }
 
 

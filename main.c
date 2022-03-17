@@ -15,7 +15,7 @@ s16 *floList[3][3]; s16 *ceilList[3][3];
 
 
 
-//! Number of frames for sliding   (CHANGE)
+//! Number of frames for swimming   (CHANGE)
 int frames = 10;
 
 //! Define Mario's position and hspd    (CHANGE)
@@ -28,7 +28,7 @@ int main() {
     //! Defining structs
     struct MarioState *m; m = malloc(sizeof(struct MarioState));
     struct Surface *floorList[numFlos]; struct Surface *ceilingList[numCeils];
-    struct Surface *surface; struct Surface *ceiling;
+    struct Surface *floor; struct Surface *ceiling;
     struct Controller *controller;
     //surface = init_surface_data((s16 ***) **triList, 0);
 
@@ -64,11 +64,11 @@ int main() {
 
 
         //printf("%f\n", m->pos[0]);
-        f32 ceilHeight;
-        surface = check_mario_surface(mPos, floorList, numFlos);
-        ceiling = check_mario_ceil(mPos, ceilingList, numCeils, &ceilHeight);
+        f32 floorHeight, ceilHeight;
+        floorHeight = check_mario_floor(mPos, floorList, numFlos, (struct Surface **) floor);
+        ceilHeight = check_mario_ceil(mPos, ceilingList, numCeils, (struct Surface **) ceiling);
         //printf("%i\n", ptInTriangle(m->pos, surface->vertex1, surface->vertex2, surface->vertex3));
-        m->floor = surface;
+        m->floor = floor;
         m->ceil = ceiling;
         //printf("%f\n", m->intendedMag);
         printf("%f\n", m->pos[2]);
