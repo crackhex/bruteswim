@@ -11,10 +11,12 @@
 #define CELL_HEIGHT_LIMIT           20000
 #define FLOOR_LOWER_LIMIT           -11000
 
+#define SURFACE_FLAG_X_PROJECTION     (1 << 3)
 
 #define ACT_GROUP_SUBMERGED  /* 0x000000C0 */ (3 << 6)
 #define ACT_FLAG_STATIONARY                  /* 0x00000200 */ (1 <<  9)
 #define ACT_FLAG_MOVING                      /* 0x00000400 */ (1 << 10)
+
 #define ACT_FLAG_SWIMMING                    /* 0x00002000 */ (1 << 13)
 #define ACT_FLAG_PAUSE_EXIT                  /* 0x08000000 */ (1 << 27)
 #define ACT_FLAG_SWIMMING_OR_FLYING          /* 0x10000000 */ (1 << 28)
@@ -49,6 +51,15 @@ struct Controller {
     /*0x04*/ float stickX;        // [-64, 64] positive is right
     /*0x08*/ float stickY;        // [-64, 64] positive is up
     /*0x0C*/ float stickMag;
+};
+
+struct WallCollisionData {
+    /*0x00*/ f32 x, y, z;
+    /*0x0C*/ f32 offsetY;
+    /*0x10*/ f32 radius;
+    /*0x14*/ u8 filler[2];
+    /*0x16*/ s16 numWalls;
+    /*0x18*/ struct Surface *walls[4];
 };
 
 struct Surface {

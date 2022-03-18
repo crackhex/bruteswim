@@ -44,7 +44,7 @@ int main() {
     }
     for (s16 i = 0; i < numCeils; i++) {
 
-        ceilingList[i] = init_ceil_data((s16 ***) **floList, i);
+        ceilingList[i] = init_surface_data( (s16 ***) **floList, i);
 
     }//m->floor = surface;
 
@@ -65,13 +65,14 @@ int main() {
 
         //printf("%f\n", m->pos[0]);
         f32 floorHeight, ceilHeight;
-        floorHeight = check_mario_floor(mPos, floorList, numFlos, (struct Surface **) floor);
-        ceilHeight = check_mario_ceil(mPos, ceilingList, numCeils, (struct Surface **) ceiling);
+        floorHeight = check_mario_floor(mPos, floorList, numFlos, &floor);
+        ceilHeight = check_mario_ceil(mPos, ceilingList, numCeils, &ceiling);
         //printf("%i\n", ptInTriangle(m->pos, surface->vertex1, surface->vertex2, surface->vertex3));
         m->floor = floor;
         m->ceil = ceiling;
         //printf("%f\n", m->intendedMag);
-        printf("%f\n", m->pos[2]);
+        printf("%f\n", floorHeight);
+        printf("%f\n", ceilHeight);
         //printf("%i\n", m->floor->vertex2[0]);
         //printf("%i\n", m->slideYaw);
         //update_sliding_angle(m, 2, 2);

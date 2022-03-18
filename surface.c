@@ -15,6 +15,7 @@ s16 ptInTriangle(f32 p[3], s16 p0[3], s16 p1[3], s16 p2[3]) {
     return FALSE;
 }
 
+
 struct Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
     struct Surface *surface = malloc(sizeof(struct Surface));
     s32 x1, y1, z1;
@@ -89,48 +90,119 @@ struct Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
     surface->lowerY = minY - 5;
     surface->upperY = maxY + 5;
 
+    if (surface->normal.x < -0.707 || surface->normal.x > 0.707) {
+        surface->flags |= SURFACE_FLAG_X_PROJECTION;
+    }
+
     return surface;
 
 }
+s32 check_wall_collisions(struct Surface **triList, s16 numTris,
+                          struct WallCollisionData *data) {
+    struct Surface *surf;
+    f32 offset;
+    f32 radius = data->radius;
+    f32 x = data->x;
+    f32 y = data->y + data->offsetY;
+    f32 z = data->z;
+    f32 px, pz;
+    f32 w1, w2, w3;
+    f32 y1, y2, y3;
+    s32 numCols = 0;
 
-struct Surface * init_ceil_data(s16 vertexData[][3][3], s16 triNum) {
-    struct Surface *surf = malloc(sizeof(struct Surface));
-    struct Surface *ceil = NULL;
-    ceil = NULL;
-    s32 x1 = vertexData[triNum][0][0];
-    s32 y1 = vertexData[triNum][0][1];
-    s32 z1 = vertexData[triNum][0][2];
-    s32 x2 = vertexData[triNum][1][0];
-    s32 y2 = vertexData[triNum][1][1];
-    s32 z2 = vertexData[triNum][1][2];
-    s32 x3 = vertexData[triNum][2][0];
-    s32 y3 = vertexData[triNum][2][1];
-    s32 z3 = vertexData[triNum][2][2];
+    // Max collision radius = 200
+    if (radius > 200.0f) {
+        radius = 200.0f;
+    }
 
-    f32 nx = (f32) (y2 - y1) * (f32) (z3 - z2) - (f32) (z2 - z1) * (f32) (y3 - y2);
-    f32 ny = (f32) (z2 - z1) * (f32) (x3 - x2) - (f32) (x2 - x1) * (f32) (z3 - z2);
-    f32 nz = (f32) (x2 - x1) * (f32) (y3 - y2) - (f32) (y2 - y1) * (f32) (x3 - x2);
-    f32 oo = surf->originOffset;
-    surf->vertex1[0] = x1;
-    surf->vertex2[0] = x2;
-    surf->vertex3[0] = x3;
+    // Stay in this loop until out of walls.
+    for (s16 i = 0; i < numTris; i++) {
+        surf = triList[i];
+        // Exclude a large number of walls immediately to optimize.
+        if (y < surf->lowerY || y > surf->upperY) {
+            continue;
+        }
 
-    surf->vertex1[1] = y1;
-    surf->vertex2[1] = y2;
-    surf->vertex3[1] = y3;
+        offset = surf->normal.x * x + surf->normal.y * y + surf->normal.z * z + surf->originOffset;
 
-    surf->vertex1[2] = z1;
-    surf->vertex2[2] = z2;
-    surf->vertex3[2] = z3;
+        if (offset < -radius || offset > radius) {
+            continue;
+        }
 
-    surf->normal.x = nx;
-    surf->normal.y = ny;
-    surf->normal.z = nz;
+        px = x;
+        pz = z;
 
-    surf->originOffset = -(nx * x1 + ny * y1 + nz * z1);
+        //! (Quantum Tunneling) Due to issues with the vertices walls choose and
+        //  the fact they are floating point, certain floating point positions
+        //  along the seam of two walls may collide with neither wall or both walls.
+        if (surf->flags & SURFACE_FLAG_X_PROJECTION) {
+            w1 = (f32) -surf->vertex1[2];            w2 = (f32) -surf->vertex2[2];            w3 = (f32) -surf->vertex3[2];
+            y1 = surf->vertex1[1];            y2 = surf->vertex2[1];            y3 = surf->vertex3[1];
 
-    /*surf->lowerY = minY - 5;
-    surf->upperY = maxY + 5;*/
+            if (surf->normal.x > 0.0f) {
+                if ((y1 - y) * (w2 - w1) - (w1 - -pz) * (y2 - y1) > 0.0f) {
+                    continue;
+                }
+                if ((y2 - y) * (w3 - w2) - (w2 - -pz) * (y3 - y2) > 0.0f) {
+                    continue;
+                }
+                if ((y3 - y) * (w1 - w3) - (w3 - -pz) * (y1 - y3) > 0.0f) {
+                    continue;
+                }
+            } else {
+                if ((y1 - y) * (w2 - w1) - (w1 - -pz) * (y2 - y1) < 0.0f) {
+                    continue;
+                }
+                if ((y2 - y) * (w3 - w2) - (w2 - -pz) * (y3 - y2) < 0.0f) {
+                    continue;
+                }
+                if ((y3 - y) * (w1 - w3) - (w3 - -pz) * (y1 - y3) < 0.0f) {
+                    continue;
+                }
+            }
+        } else {
+            w1 = surf->vertex1[0];            w2 = surf->vertex2[0];            w3 = surf->vertex3[0];
+            y1 = surf->vertex1[1];            y2 = surf->vertex2[1];            y3 = surf->vertex3[1];
+
+            if (surf->normal.z > 0.0f) {
+                if ((y1 - y) * (w2 - w1) - (w1 - px) * (y2 - y1) > 0.0f) {
+                    continue;
+                }
+                if ((y2 - y) * (w3 - w2) - (w2 - px) * (y3 - y2) > 0.0f) {
+                    continue;
+                }
+                if ((y3 - y) * (w1 - w3) - (w3 - px) * (y1 - y3) > 0.0f) {
+                    continue;
+                }
+            } else {
+                if ((y1 - y) * (w2 - w1) - (w1 - px) * (y2 - y1) < 0.0f) {
+                    continue;
+                }
+                if ((y2 - y) * (w3 - w2) - (w2 - px) * (y3 - y2) < 0.0f) {
+                    continue;
+                }
+                if ((y3 - y) * (w1 - w3) - (w3 - px) * (y1 - y3) < 0.0f) {
+                    continue;
+                }
+            }
+        }
+
+        //! (Wall Overlaps) Because this doesn't update the x and z local variables,
+        //  multiple walls can push mario more than is required.
+        data->x += surf->normal.x * (radius - offset);
+        data->z += surf->normal.z * (radius - offset);
+
+        //! (Unreferenced Walls) Since this only returns the first four walls,
+        //  this can lead to wall interaction being missed. Typically unreferenced walls
+        //  come from only using one wall, however.
+        if (data->numWalls < 4) {
+            data->walls[data->numWalls++] = surf;
+        }
+
+        numCols++;
+    }
+
+    return numCols;
 }
 
 f32 check_mario_floor(f32 mPos[3], struct Surface **triList, s16 numTris, struct Surface **pfloor) {
@@ -181,7 +253,29 @@ f32 find_tri_height(struct Surface *surf, s32 x, s32 y, s32 z) {
     return height;
 }
 
-f32 vec3f_find_ceil(pos[3], f32 height, struct Surface **ceil) {
+struct Surface *resolve_and_return_wall_collisions(struct Surface **triList, s16 numTris, f32 pos[3], f32 offset, f32 radius) {
+    struct WallCollisionData collisionData;
+    struct Surface *wall = NULL;
+
+    collisionData.x = pos[0];
+    collisionData.y = pos[1];
+    collisionData.z = pos[2];
+    collisionData.radius = radius;
+    collisionData.offsetY = offset;
+
+    if (check_wall_collisions(triList, numTris, &collisionData)) {
+        wall = collisionData.walls[collisionData.numWalls - 1];
+    }
+
+    pos[0] = collisionData.x;
+    pos[1] = collisionData.y;
+    pos[2] = collisionData.z;
+
+    // This only returns the most recent wall and can also return NULL
+    // there are no wall collisions.
+    return wall;
+}
+f32 vec3f_find_ceil(f32 pos[3], f32 height, struct Surface **ceil) {
 
     return find_tri_height(*ceil, pos[0], height + 80.0f, pos[2]);
 }
