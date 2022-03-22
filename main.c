@@ -29,8 +29,8 @@ s16 faceAngle = 23159;//14;
 int main() {
     //! Defining structs
     MarioState *m = (MarioState *) malloc(sizeof(*m));
-    Surface *floorList[numFlos];
-    Surface *ceilingList[numCeils];
+    Surface floorList[numFlos];
+    Surface ceilingList[numCeils];
     Surface *floor;
     Surface *ceiling;
     Controller *controller;
@@ -42,13 +42,13 @@ int main() {
     for (s16 i = 0; i < numFlos; i++) {
 
         //numSurfaces = sizeof vertexData / sizeof *vertexData;
-        floorList[i] = init_surface_data((s16 ***) **floList, i);
+        init_surface_data(&floorList[i], (s16 ***) **floList, i);
 
         //surface->type = surfaceType;
     }
     for (s16 i = 0; i < numCeils; i++) {
 
-        ceilingList[i] = init_surface_data( (s16 ***) **floList, i);
+        init_surface_data(&ceilingList[i], (s16 ***) **ceilList, i);
 
     }//m->floor = surface;
 
@@ -85,5 +85,5 @@ int main() {
         //printf("%f\n", m->pos[0]);
 
     }
-
+    free(m);
 }
