@@ -8,8 +8,10 @@
 //s16 tri1[3][3] = { {6144, 1024, 6144}, {7168, 2458, 8192}, {6144, 1024, -1535} };
 s16 flo1[3][3] = {{-5375,0,6464},{-5842,128,6248},{-6015,0,6464}};
 s16 flo2[3][3] = { {4144, 1024, 6144}, {4168, 2458, 8192}, {6144, 1024, -1535} };
-s16 numFlos = 2; s16 numCeils = 2;
-s16 *floList[3][3]; s16 *ceilList[3][3];
+s16 numFlos = 2;
+s16 numCeils = 2;
+s16 *floList[3][3];
+s16 *ceilList[3][3];
 
 
 
@@ -26,10 +28,12 @@ s16 faceAngle = 23159;//14;
 
 int main() {
     //! Defining structs
-    struct MarioState *m; m = malloc(sizeof(struct MarioState));
-    struct Surface *floorList[numFlos]; struct Surface *ceilingList[numCeils];
-    struct Surface *floor; struct Surface *ceiling;
-    struct Controller *controller;
+    MarioState *m = (MarioState *) malloc(sizeof(*m));
+    Surface *floorList[numFlos];
+    Surface *ceilingList[numCeils];
+    Surface *floor;
+    Surface *ceiling;
+    Controller *controller;
     //surface = init_surface_data((s16 ***) **triList, 0);
 
     //! add tris to list

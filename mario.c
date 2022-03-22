@@ -2,8 +2,8 @@
 #include "maths.h"
 #include <math.h>
 
-void update_mario_joystick_inputs(struct MarioState *m) {
-    struct Controller *controller = m->controller;
+void update_mario_joystick_inputs(MarioState *m) {
+    Controller *controller = m->controller;
     controller->stickMag = sqrtf(controller->stickX * controller->stickX + controller->stickY * controller->stickY);
     f32 mag = ((controller->stickMag / 64.0f) * (controller->stickMag / 64.0f)) * 64.0f;
 
