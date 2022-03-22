@@ -45,24 +45,24 @@ extern f32 sin_table[];
 extern s16 arctan_table[];
 //extern s16 atan2s(f32 y, f32 x);
 
-struct Controller {
+typedef struct Controller {
     /*0x00*/ s16 rawStickX;       //
     /*0x02*/ s16 rawStickY;       //
     /*0x04*/ float stickX;        // [-64, 64] positive is right
     /*0x08*/ float stickY;        // [-64, 64] positive is up
     /*0x0C*/ float stickMag;
-};
+} Controller;
 
-struct WallCollisionData {
+typedef struct WallCollisionData {
     /*0x00*/ f32 x, y, z;
     /*0x0C*/ f32 offsetY;
     /*0x10*/ f32 radius;
     /*0x14*/ u8 filler[2];
     /*0x16*/ s16 numWalls;
     /*0x18*/ struct Surface *walls[4];
-};
+} WallCollisionData;
 
-struct Surface {
+typedef struct Surface {
     /*0x00*/ s16 type;
     /*0x02*/ s16 force;
     /*0x04*/ s8 flags;
@@ -79,8 +79,9 @@ struct Surface {
     } normal;
     /*0x28*/ f32 originOffset;
     /*0x2C*/ struct Object *object;
-};
-struct MarioState {
+} Surface;
+
+typedef struct MarioState {
     u32 action;
     s16 intendedYaw;
     f32 forwardVel;
@@ -96,9 +97,10 @@ struct MarioState {
     f32 pos[3];
     f32 vel[3];
     struct Controller *controller;
-};
-struct Input {
+} MarioState;
+
+typedef struct Input {
     s16 x;
     s16 y;
-};
+} Input;
 #endif //TYPES_H

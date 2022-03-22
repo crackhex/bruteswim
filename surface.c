@@ -16,34 +16,28 @@ s16 ptInTriangle(f32 p[3], s16 p0[3], s16 p1[3], s16 p2[3]) {
 }
 
 
-struct Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
-    struct Surface *surface = malloc(sizeof(struct Surface));
-    s32 x1, y1, z1;
-    s32 x2, y2, z2;
-    s32 x3, y3, z3;
-    s32 maxY, minY;
-    f32 nx, ny, nz;
-    f32 mag;
+Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
+    Surface *surface = (Surface *) malloc(sizeof(*surface));
 
-    x1 = vertexData[triNum][0][0];
-    y1 = vertexData[triNum][0][1];
-    z1 = vertexData[triNum][0][2];
+    s32 x1 = vertexData[triNum][0][0];
+    s32 y1 = vertexData[triNum][0][1];
+    s32 z1 = vertexData[triNum][0][2];
 
-    x2 = vertexData[triNum][1][0];
-    y2 = vertexData[triNum][1][1];
-    z2 = vertexData[triNum][1][2];
+    s32 x2 = vertexData[triNum][1][0];
+    s32 y2 = vertexData[triNum][1][1];
+    s32 z2 = vertexData[triNum][1][2];
 
-    x3 = vertexData[triNum][2][0];
-    y3 = vertexData[triNum][2][1];
-    z3 = vertexData[triNum][2][2];
+    s32 x3 = vertexData[triNum][2][0];
+    s32 y3 = vertexData[triNum][2][1];
+    s32 z3 = vertexData[triNum][2][2];
     // (v2 - v1) x (v3 - v2)
-    nx = (f32) (y2 - y1) * (f32) (z3 - z2) - (f32) (z2 - z1) * (f32) (y3 - y2);
-    ny = (f32) (z2 - z1) * (f32) (x3 - x2) - (f32) (x2 - x1) * (f32) (z3 - z2);
-    nz = (f32) (x2 - x1) * (f32) (y3 - y2) - (f32) (y2 - y1) * (f32) (x3 - x2);
+    f32 nx = (f32) (y2 - y1) * (f32) (z3 - z2) - (f32) (z2 - z1) * (f32) (y3 - y2);
+    f32 ny = (f32) (z2 - z1) * (f32) (x3 - x2) - (f32) (x2 - x1) * (f32) (z3 - z2);
+    f32 nz = (f32) (x2 - x1) * (f32) (y3 - y2) - (f32) (y2 - y1) * (f32) (x3 - x2);
 
-    mag = sqrtf(nx * nx + ny * ny + nz * nz);
+    f32 mag = sqrtf(nx * nx + ny * ny + nz * nz);
     // Could have used min_3 and max_3 for this...
-    minY = y1;
+    s32 minY = y1;
     if (y2 < minY) {
         minY = y2;
     }
@@ -51,7 +45,7 @@ struct Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
         minY = y3;
     }
 
-    maxY = y1;
+    s32 maxY = y1;
     if (y2 > maxY) {
         maxY = y2;
     }
@@ -61,6 +55,7 @@ struct Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
 
     // Checking to make sure no DIV/0
     if (mag < 0.0001) {
+        free(surface);
         return NULL;
     }
 
@@ -97,15 +92,12 @@ struct Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
     return surface;
 
 }
-s32 check_wall_collisions(struct Surface **triList, s16 numTris,
-                          struct WallCollisionData *data) {
-    struct Surface *surf;
-    f32 offset;
+s32 check_wall_collisions(Surface **triList, s16 numTris,
+                          WallCollisionData *data) {
     f32 radius = data->radius;
     f32 x = data->x;
     f32 y = data->y + data->offsetY;
     f32 z = data->z;
-    f32 px, pz;
     f32 w1, w2, w3;
     f32 y1, y2, y3;
     s32 numCols = 0;
@@ -117,20 +109,20 @@ s32 check_wall_collisions(struct Surface **triList, s16 numTris,
 
     // Stay in this loop until out of walls.
     for (s16 i = 0; i < numTris; i++) {
-        surf = triList[i];
+        Surface *surf = triList[i];
         // Exclude a large number of walls immediately to optimize.
         if (y < surf->lowerY || y > surf->upperY) {
             continue;
         }
 
-        offset = surf->normal.x * x + surf->normal.y * y + surf->normal.z * z + surf->originOffset;
+        f32 offset = surf->normal.x * x + surf->normal.y * y + surf->normal.z * z + surf->originOffset;
 
         if (offset < -radius || offset > radius) {
             continue;
         }
 
-        px = x;
-        pz = z;
+        f32 px = x;
+        f32 pz = z;
 
         //! (Quantum Tunneling) Due to issues with the vertices walls choose and
         //  the fact they are floating point, certain floating point positions
@@ -205,12 +197,11 @@ s32 check_wall_collisions(struct Surface **triList, s16 numTris,
     return numCols;
 }
 
-f32 check_mario_floor(f32 mPos[3], struct Surface **triList, s16 numTris, struct Surface **pfloor) {
+f32 check_mario_floor(f32 mPos[3], Surface **triList, s16 numTris, Surface **pfloor) {
     f32 height = CELL_HEIGHT_LIMIT;
     //printf("%i\n", numTris);
-    struct Surface *floor;
     for (s16 i = 0; i < numTris; i++) {
-        floor = triList[i];
+        Surface *floor = triList[i];
         //numSurfaces = sizeof vertexData / sizeof *vertexData;
         if (ptInTriangle( mPos, floor->vertex1, floor->vertex2, floor->vertex3) == 0) {
             //printf("%i\n", i);
@@ -223,13 +214,11 @@ f32 check_mario_floor(f32 mPos[3], struct Surface **triList, s16 numTris, struct
     return height;
 
 }
-f32 check_mario_ceil(f32 mPos[3], struct Surface **triList, s16 numTris, struct Surface  **pceil) {
-    s16 i;
-    f32 height; height = CELL_HEIGHT_LIMIT;
+f32 check_mario_ceil(f32 mPos[3], Surface **triList, s16 numTris, Surface  **pceil) {
+    f32 height = CELL_HEIGHT_LIMIT;
     //printf("%i\n", numTris);
-    struct Surface *surface;
-    for (i = 0; i < numTris; i++) {
-        surface = triList[i];
+    for (s16 i = 0; i < numTris; i++) {
+        Surface *surface = triList[i];
         //numSurfaces = sizeof vertexData / sizeof *vertexData;
         if (ptInTriangle( mPos, surface->vertex1, surface->vertex2, surface->vertex3) == 0) {
             //printf("%i\n", i);
@@ -246,16 +235,15 @@ f32 check_mario_ceil(f32 mPos[3], struct Surface **triList, s16 numTris, struct 
     return height;
 
 }
-f32 find_tri_height(struct Surface *surf, s32 x, s32 y, s32 z) {
+f32 find_tri_height(Surface *surf, s32 x, s32 y, s32 z) {
 
-    f32 height;
-    height = -((f32) x * surf->normal.x + surf->normal.z * (f32) z + surf->originOffset) / surf->normal.y;
+    f32 height = -((f32) x * surf->normal.x + surf->normal.z * (f32) z + surf->originOffset) / surf->normal.y;
     return height;
 }
 
-struct Surface *resolve_and_return_wall_collisions(struct Surface **triList, s16 numTris, f32 pos[3], f32 offset, f32 radius) {
-    struct WallCollisionData collisionData;
-    struct Surface *wall = NULL;
+Surface *resolve_and_return_wall_collisions(Surface **triList, s16 numTris, f32 pos[3], f32 offset, f32 radius) {
+    WallCollisionData collisionData;
+    Surface *wall = NULL;
 
     collisionData.x = pos[0];
     collisionData.y = pos[1];
@@ -275,7 +263,7 @@ struct Surface *resolve_and_return_wall_collisions(struct Surface **triList, s16
     // there are no wall collisions.
     return wall;
 }
-f32 vec3f_find_ceil(f32 pos[3], f32 height, struct Surface **ceil) {
+f32 vec3f_find_ceil(f32 pos[3], f32 height, Surface **ceil) {
 
     return find_tri_height(*ceil, pos[0], height + 80.0f, pos[2]);
 }
