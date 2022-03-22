@@ -16,8 +16,7 @@ s16 ptInTriangle(f32 p[3], s16 p0[3], s16 p1[3], s16 p2[3]) {
 }
 
 
-Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
-    Surface *surface = (Surface *) malloc(sizeof(*surface));
+void init_surface_data(Surface *surface, s16 vertexData[][3][3], s16 triNum) {
 
     s32 x1 = vertexData[triNum][0][0];
     s32 y1 = vertexData[triNum][0][1];
@@ -55,8 +54,7 @@ Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
 
     // Checking to make sure no DIV/0
     if (mag < 0.0001) {
-        free(surface);
-        return NULL;
+        return;
     }
 
     mag = (f32)(1.0 / mag);
@@ -89,10 +87,8 @@ Surface * init_surface_data(s16 vertexData[][3][3], s16 triNum) {
         surface->flags |= SURFACE_FLAG_X_PROJECTION;
     }
 
-    return surface;
-
 }
-s32 check_wall_collisions(Surface **triList, s16 numTris,
+s32 check_wall_collisions(Surface *triList, s16 numTris,
                           WallCollisionData *data) {
     f32 radius = data->radius;
     f32 x = data->x;
@@ -109,7 +105,7 @@ s32 check_wall_collisions(Surface **triList, s16 numTris,
 
     // Stay in this loop until out of walls.
     for (s16 i = 0; i < numTris; i++) {
-        Surface *surf = triList[i];
+        Surface *surf = triList + i;
         // Exclude a large number of walls immediately to optimize.
         if (y < surf->lowerY || y > surf->upperY) {
             continue;
@@ -197,11 +193,11 @@ s32 check_wall_collisions(Surface **triList, s16 numTris,
     return numCols;
 }
 
-f32 check_mario_floor(f32 mPos[3], Surface **triList, s16 numTris, Surface **pfloor) {
+f32 check_mario_floor(f32 mPos[3], Surface *triList, s16 numTris, Surface **pfloor) {
     f32 height = CELL_HEIGHT_LIMIT;
     //printf("%i\n", numTris);
     for (s16 i = 0; i < numTris; i++) {
-        Surface *floor = triList[i];
+        Surface *floor = triList + i;
         //numSurfaces = sizeof vertexData / sizeof *vertexData;
         if (ptInTriangle( mPos, floor->vertex1, floor->vertex2, floor->vertex3) == 0) {
             //printf("%i\n", i);
@@ -214,11 +210,11 @@ f32 check_mario_floor(f32 mPos[3], Surface **triList, s16 numTris, Surface **pfl
     return height;
 
 }
-f32 check_mario_ceil(f32 mPos[3], Surface **triList, s16 numTris, Surface  **pceil) {
+f32 check_mario_ceil(f32 mPos[3], Surface *triList, s16 numTris, Surface  **pceil) {
     f32 height = CELL_HEIGHT_LIMIT;
     //printf("%i\n", numTris);
     for (s16 i = 0; i < numTris; i++) {
-        Surface *surface = triList[i];
+        Surface *surface = triList + i;
         //numSurfaces = sizeof vertexData / sizeof *vertexData;
         if (ptInTriangle( mPos, surface->vertex1, surface->vertex2, surface->vertex3) == 0) {
             //printf("%i\n", i);
