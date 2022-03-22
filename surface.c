@@ -237,7 +237,7 @@ f32 find_tri_height(Surface *surf, s32 x, s32 y, s32 z) {
     return height;
 }
 
-Surface *resolve_and_return_wall_collisions(Surface **triList, s16 numTris, f32 pos[3], f32 offset, f32 radius) {
+Surface *resolve_and_return_wall_collisions(Surface *triList, s16 numTris, f32 pos[3], f32 offset, f32 radius) {
     WallCollisionData collisionData;
     Surface *wall = NULL;
 
