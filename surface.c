@@ -4,17 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-s16 ptInTriangle(f32 p[3], s16 p0[3], s16 p1[3], s16 p2[3]) {
-    if (( p0[2] - (s16) p[2]) * (p1[0] -  p0[0]) - (p0[0] - (s16) p[0]) * (p1[2] - p0[2]) > 0) {
-        if (( p1[2] - (s16) p[2]) * ( p2[0] -  p1[0]) - ( p1[0] - (s16) p[0]) * ( p2[2] -  p1[2]) > 0) {
-            if ((p2[2] - (s16) p[2]) * ( p0[0] -  p2[0]) - ( p2[0] - (s16) p[0]) * ( p0[2] - p2[2]) > 0) {
-                return TRUE;
-            }
-        }
-    }
-    return FALSE;
-}
-
 
 void init_surface_data(Surface *surface, s16 vertexData[][3][3], s16 triNum) {
 
@@ -193,38 +182,72 @@ s32 check_wall_collisions(Surface *triList, s16 numTris,
     return numCols;
 }
 
-f32 check_mario_floor(f32 mPos[3], Surface *triList, s16 numTris, Surface **pfloor) {
+f32 check_mario_floor(f32 x, f32 y, f32 z, Surface *triList, s16 numTris, Surface **pfloor) {
+    s32 x1, z1, x2, z2, x3, z3;
     f32 height = CELL_HEIGHT_LIMIT;
     //printf("%i\n", numTris);
+
     for (s16 i = 0; i < numTris; i++) {
         Surface *floor = triList + i;
+
         //numSurfaces = sizeof vertexData / sizeof *vertexData;
-        if (ptInTriangle( mPos, floor->vertex1, floor->vertex2, floor->vertex3) == 0) {
-            //printf("%i\n", i);
+        x1 = triList[i].vertex1[0];
+        z1 = triList[i].vertex1[2];
+        x2 = triList[i].vertex2[0];
+        z2 = triList[i].vertex2[2];
+        if ((z1 - z) * (x2 - x1) - (x1 - x) * (z2 - z1) < 0) {
             continue;
         }
-        height = -((f32) mPos[0] * floor->normal.x + floor->normal.z * (f32) mPos[2] + floor->originOffset) / floor->normal.y;
-        return height;
+
+        // To slightly save on computation time, set this later.
+        x3 = triList[i].vertex3[0];
+        z3 = triList[i].vertex3[2];
+
+        if ((z2 - z) * (x3 - x2) - (x2 - x) * (z3 - z2) < 0) {
+            continue;
+        }
+        if ((z3 - z) * (x1 - x3) - (x3 - x) * (z1 - z3) < 0) {
+            continue;
+        }
+
+        height = -((f32) x * floor->normal.x + floor->normal.z * (f32) z + floor->originOffset) / floor->normal.y;
+        *pfloor = floor;
         //surface->type = surfaceType;
     }
+
     return height;
 
 }
-f32 check_mario_ceil(f32 mPos[3], Surface *triList, s16 numTris, Surface  **pceil) {
+f32 check_mario_ceil(f32 x, f32 y, f32 z, Surface *triList, s16 numTris, Surface  **pceil) {
+    s32 x1, z1, x2, z2, x3, z3;
     f32 height = CELL_HEIGHT_LIMIT;
     //printf("%i\n", numTris);
-    for (s16 i = 0; i < numTris; i++) {
-        Surface *surface = triList + i;
+    for (s16 i = 1; i <= numTris; i++) {
+        Surface *surf = triList + i;
         //numSurfaces = sizeof vertexData / sizeof *vertexData;
-        if (ptInTriangle( mPos, surface->vertex1, surface->vertex2, surface->vertex3) == 0) {
-            //printf("%i\n", i);
+        x1 = triList[i].vertex1[0];
+        z1 = triList[i].vertex1[2];
+        x2 = triList[i].vertex2[0];
+        z2 = triList[i].vertex2[2];
+        if ((z1 - z) * (x2 - x1) - (x1 - x) * (z2 - z1) < 0) {
             continue;
         }
-        height = -((f32) mPos[0] * surface->normal.x + surface->normal.z * (f32) mPos[2] + surface->originOffset) / surface->normal.y;
-        if (mPos[1] - (height - -78.0f) > 0.0f) {
+
+        // To slightly save on computation time, set this later.
+        x3 = triList[i].vertex3[0];
+        z3 = triList[i].vertex3[2];
+
+        if ((z2 - z) * (x3 - x2) - (x2 - x) * (z3 - z2) < 0) {
             continue;
         }
-        *pceil = surface;
+        if ((z3 - z) * (x1 - x3) - (x3 - x) * (z1 - z3) < 0) {
+            continue;
+        }
+        height = -((f32) x * surf->normal.x + surf->normal.z * (f32) z + surf->originOffset) / surf->normal.y;
+        if (y - (height - -78.0f) > 0.0f) {
+            continue;
+        }
+        *pceil = surf;
         return height;
         //surface->type = surfaceType;
     }
@@ -237,7 +260,7 @@ f32 find_tri_height(Surface *surf, s32 x, s32 y, s32 z) {
     return height;
 }
 
-Surface *resolve_and_return_wall_collisions(Surface **triList, s16 numTris, f32 pos[3], f32 offset, f32 radius) {
+Surface *resolve_and_return_wall_collisions(Surface *triList, s16 numTris, f32 pos[3], f32 offset, f32 radius) {
     WallCollisionData collisionData;
     Surface *wall = NULL;
 
@@ -264,4 +287,29 @@ f32 vec3f_find_ceil(f32 pos[3], f32 height, Surface **ceil) {
     return find_tri_height(*ceil, pos[0], height + 80.0f, pos[2]);
 }
 
+s16 find_floor_slope(MarioState *m, s16 yawOffset, Surface *triList) {
+    Surface *floor;
+    f32 forwardFloorY, backwardFloorY;
+    f32 forwardYDelta, backwardYDelta;
+    s16 result;
+
+    f32 x = sins(m->faceAngle[1] + yawOffset) * 5.0f;
+    f32 z = coss(m->faceAngle[1] + yawOffset) * 5.0f;
+
+    forwardFloorY = check_mario_floor(m->pos[0] + x, m->pos[1] + 100.0f, m->pos[2] + z, triList, 2,&floor);
+    backwardFloorY = check_mario_floor(m->pos[0] - x, m->pos[1] + 100.0f, m->pos[2] - z, triList, 2, &floor);
+
+    //! If Mario is near OOB, these floorY's can sometimes be -11000.
+    //  This will cause these to be off and give improper slopes.
+    forwardYDelta = forwardFloorY - m->pos[1];
+    backwardYDelta = m->pos[1] - backwardFloorY;
+
+    if (forwardYDelta * forwardYDelta < backwardYDelta * backwardYDelta) {
+        result = atan2s(5.0f, forwardYDelta);
+    } else {
+        result = atan2s(5.0f, backwardYDelta);
+    }
+
+    return result;
+}
 

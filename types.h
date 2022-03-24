@@ -13,6 +13,12 @@
 
 #define SURFACE_FLAG_X_PROJECTION     (1 << 3)
 
+#define WATER_STEP_NONE        0
+#define WATER_STEP_HIT_FLOOR   1
+#define WATER_STEP_HIT_CEILING 2
+#define WATER_STEP_CANCELLED   3
+#define WATER_STEP_HIT_WALL    4
+
 #define ACT_GROUP_SUBMERGED  /* 0x000000C0 */ (3 << 6)
 #define ACT_FLAG_STATIONARY                  /* 0x00000200 */ (1 <<  9)
 #define ACT_FLAG_MOVING                      /* 0x00000400 */ (1 << 10)
