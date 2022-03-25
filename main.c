@@ -62,7 +62,9 @@ int main() {
 
     //! Set mario's variables to starting
     m->pos[0] = mPos[0]; m->pos[1] = mPos[1]; m->pos[2] = mPos[2];
+    m->forwardVel = 0;
     m->faceAngle[1] = faceAngle;
+    m->action = ACT_WATER_IDLE;
     //! Testing if mario is in triangle
     //printf("%f\n", m->forwardVel);
     m->intendedMag = 0.0f;

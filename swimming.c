@@ -1,7 +1,13 @@
 #include "surface.h"
 #include "types.h"
 #include "maths.h"
+#include "mario.h"
 
+#define MIN_SWIM_STRENGTH 160
+#define MIN_SWIM_SPEED 16.0f
+static s16 sWasAtSurface = FALSE;
+
+static s16 sSwimStrength = MIN_SWIM_STRENGTH;
 
 s32 swimming_near_surface(MarioState *m) {
 
@@ -170,6 +176,23 @@ static u32 perform_water_step(MarioState *m, Surface *floorList, Surface *wallLi
 
     return stepResult;
 }
+static void common_idle_step(struct MarioState *m, Surface *floorList, Surface *wallList, Surface *ceilList, s16 numFlos, s16 numWalls, s16 numCeils) {
+    update_swimming_yaw(m);
+    update_swimming_pitch(m);
+    update_swimming_speed(m, MIN_SWIM_SPEED);
+    perform_water_step(m, floorList, wallList, ceilList, numFlos, numWalls, numCeils);
+    //set_swimming_at_surface_particles(m, PARTICLE_IDLE_WATER_WAVE);
+
+}
+static s32 act_water_idle(struct MarioState *m, Surface *floorList, Surface *wallList, Surface *ceilList, s16 numFlos, s16 numWalls, s16 numCeils) {
+    //u32 val = 0x10000;
+
+    if (m->input & INPUT_A_PRESSED) {
+        return set_mario_action(m, ACT_BREASTSTROKE, 0);
+    }
+    common_idle_step(m, floorList, wallList, ceilList, numFlos, numWalls, numCeils);
+    return FALSE;
+}
 void common_swimming_step(MarioState *m, s16 swimStrength, Surface *floorList, Surface *wallList, Surface *ceilList, s16 numFlos, s16 numWalls, s16 numCeils) {
     s16 floorPitch;
 
@@ -210,3 +233,88 @@ void common_swimming_step(MarioState *m, s16 swimStrength, Surface *floorList, S
 
     //surface_swim_bob(m);
 }
+
+static s32 act_breaststroke(MarioState *m, Surface *floorList, Surface *wallList, Surface *ceilList, s16 numFlos, s16 numWalls, s16 numCeils) {
+    if (m->actionArg == 0) {
+        sSwimStrength = MIN_SWIM_STRENGTH;
+    }
+
+    if (++m->actionTimer == 14) {
+        return set_mario_action(m, ACT_FLUTTER_KICK, 0);
+    }
+
+    if (m->actionTimer < 6) {
+        m->forwardVel += 0.5f;
+    }
+
+    if (m->actionTimer >= 9) {
+        m->forwardVel += 1.5f;
+    }
+
+    if (m->actionTimer >= 2) {
+        if (m->actionTimer < 6 && (m->input & INPUT_A_PRESSED)) {
+            m->actionState = 1;
+        }
+
+        if (m->actionTimer == 9 && m->actionState == 1) {
+            m->actionState = 0;
+            m->actionTimer = 1;
+            sSwimStrength = MIN_SWIM_STRENGTH;
+        }
+    }
+    common_swimming_step(m, sSwimStrength, floorList, wallList, ceilList, numFlos, numWalls, numCeils);
+
+    return FALSE;
+}
+
+static s32 act_swimming_end(MarioState *m, Surface *floorList, Surface *wallList, Surface *ceilList, s16 numFlos, s16 numWalls, s16 numCeils) {
+
+    if (m->actionTimer >= 15) {
+        return set_mario_action(m, ACT_WATER_ACTION_END, 0);
+    }
+
+
+    if ((m->input & INPUT_A_DOWN) && m->actionTimer >= 7) {
+        if (m->actionTimer == 7 && sSwimStrength < 280) {
+            sSwimStrength += 10;
+        }
+        return set_mario_action(m, ACT_BREASTSTROKE, 1);
+    }
+
+    if (m->actionTimer >= 7) {
+        sSwimStrength = MIN_SWIM_STRENGTH;
+    }
+
+    m->actionTimer++;
+
+    m->forwardVel -= 0.25f;
+    common_swimming_step(m, sSwimStrength, floorList, wallList, ceilList, numFlos, numWalls, numCeils);
+
+    return FALSE;
+}
+
+static s32 act_water_action_end(struct MarioState *m, Surface *floorList, Surface *wallList, Surface *ceilList, s16 numFlos, s16 numWalls, s16 numCeils) {
+    if (m->input & INPUT_A_PRESSED) {
+        return set_mario_action(m, ACT_BREASTSTROKE, 0);
+    }
+
+    common_idle_step(m, floorList, wallList, ceilList, numFlos, numWalls, numCeils);
+    set_mario_action(m, ACT_WATER_IDLE, 0);
+    return FALSE;
+}
+
+s32 mario_execute_submerged_action(struct MarioState *m, Surface *floorList, Surface *wallList, Surface *ceilList, s16 numFlos, s16 numWalls, s16 numCeils) {
+    s32 cancel;
+    /* clang-format off */
+    switch (m->action) {
+        case ACT_WATER_IDLE:                 cancel = act_water_idle(m, floorList, wallList, ceilList, numFlos, numWalls, numCeils);                 break;
+        case ACT_WATER_ACTION_END:           cancel = act_water_action_end(m, floorList, wallList, ceilList, numFlos, numWalls, numCeils);           break;
+        case ACT_BREASTSTROKE:               cancel = act_breaststroke(m, floorList, wallList, ceilList, numFlos, numWalls, numCeils);               break;
+        case ACT_SWIMMING_END:               cancel = act_swimming_end(m, floorList, wallList, ceilList, numFlos, numWalls, numCeils);               break;
+        //case ACT_FLUTTER_KICK:               cancel = act_flutter_kick(m);               break;
+
+    }
+    /* clang-format on */
+    return cancel;
+}
+

@@ -11,6 +11,11 @@
 #define CELL_HEIGHT_LIMIT           20000
 #define FLOOR_LOWER_LIMIT           -11000
 
+#define INPUT_NONZERO_ANALOG         0x0001
+#define INPUT_A_PRESSED              0x0002
+#define INPUT_A_DOWN                 0x0080
+#define INPUT_IN_WATER               0x0200
+
 #define SURFACE_FLAG_X_PROJECTION     (1 << 3)
 
 #define WATER_STEP_NONE        0
@@ -19,6 +24,7 @@
 #define WATER_STEP_CANCELLED   3
 #define WATER_STEP_HIT_WALL    4
 
+#define ACT_GROUP_MASK       0x000001C0
 #define ACT_GROUP_SUBMERGED  /* 0x000000C0 */ (3 << 6)
 #define ACT_FLAG_STATIONARY                  /* 0x00000200 */ (1 <<  9)
 #define ACT_FLAG_MOVING                      /* 0x00000400 */ (1 << 10)
@@ -88,7 +94,13 @@ typedef struct Surface {
 } Surface;
 
 typedef struct MarioState {
+    u16 input;
     u32 action;
+    u32 prevAction;
+    u8 framesSinceA;
+    u16 actionState;
+    u16 actionTimer;
+    u32 actionArg;
     s16 intendedYaw;
     f32 forwardVel;
     f32 intendedMag;
