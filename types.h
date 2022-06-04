@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-
 #define TRUE 1
 #define FALSE 0
 
@@ -15,6 +14,8 @@
 #define INPUT_A_PRESSED              0x0002
 #define INPUT_A_DOWN                 0x0080
 #define INPUT_IN_WATER               0x0200
+
+#define A_BUTTON    0x8000
 
 #define SURFACE_FLAG_X_PROJECTION     (1 << 3)
 
@@ -30,7 +31,6 @@
 #define ACT_FLAG_MOVING                      /* 0x00000400 */ (1 << 10)
 
 #define ACT_FLAG_SWIMMING                    /* 0x00002000 */ (1 << 13)
-#define ACT_FLAG_PAUSE_EXIT                  /* 0x08000000 */ (1 << 27)
 #define ACT_FLAG_SWIMMING_OR_FLYING          /* 0x10000000 */ (1 << 28)
 #define ACT_FLAG_WATER_OR_TEXT               /* 0x20000000 */ (1 << 29)
 
@@ -52,6 +52,18 @@ typedef uint64_t u64;
 
 typedef float  f32;
 typedef double f64;
+typedef struct {
+    u16     type;                   /* Controller Type */
+    u8      status;                 /* Controller status */
+    u8	    errnum;
+}OSContStatus;
+
+typedef struct {
+    u16     button;
+    s8      stick_x;		/* -80 <= stick_x <= 80 */
+    s8      stick_y;		/* -80 <= stick_y <= 80 */
+    u8	    errnum;
+} OSContPad;
 
 extern f32 sin_table[];
 extern s16 arctan_table[];
@@ -62,7 +74,11 @@ typedef struct Controller {
     /*0x02*/ s16 rawStickY;       //
     /*0x04*/ float stickX;        // [-64, 64] positive is right
     /*0x08*/ float stickY;        // [-64, 64] positive is up
-    /*0x0C*/ float stickMag;
+    /*0x0C*/ float stickMag;      // distance from center [0, 64]
+    /*0x10*/ u16 buttonDown;
+    /*0x12*/ u16 buttonPressed;
+    /*0x14*/ OSContStatus *statusData;
+    /*0x18*/ OSContPad *controllerData;
 } Controller;
 
 typedef struct WallCollisionData {

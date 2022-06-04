@@ -132,7 +132,7 @@ static u32 perform_water_step(MarioState *m, Surface *floorList, Surface *wallLi
 
     wall = resolve_and_return_wall_collisions(wallList, numWalls,nextPos, 10.0f, 110.0f);
     floorHeight = check_mario_floor(nextPos[0], nextPos[1], nextPos[2], floorList,numFlos, &floor);
-    ceilHeight = vec3f_find_ceil(nextPos, floorHeight, ceil);
+    ceilHeight = vec3f_find_ceil(nextPos, floorHeight, &ceil);
 
     if (floor == NULL) {
         return WATER_STEP_CANCELLED;
@@ -174,7 +174,7 @@ static u32 perform_water_step(MarioState *m, Surface *floorList, Surface *wallLi
     vec3s_set(marioObj->header.gfx.angle, -m->faceAngle[0], m->faceAngle[1], m->faceAngle[2]);
     UNNECESSARY CODE */
 
-    return stepResult;
+    //return stepResult;  ALREADY DONE
 }
 static void common_idle_step(struct MarioState *m, Surface *floorList, Surface *wallList, Surface *ceilList, s16 numFlos, s16 numWalls, s16 numCeils) {
     update_swimming_yaw(m);

@@ -3,6 +3,21 @@
 #include "swimming.h"
 #include <math.h>
 
+void update_mario_button_inputs(struct MarioState *m) {
+    if (m->controller->buttonPressed & A_BUTTON) {
+        m->input |= INPUT_A_PRESSED;
+    }
+
+    if (m->controller->buttonDown & A_BUTTON) {
+        m->input |= INPUT_A_DOWN;
+    }
+
+    if (m->input & INPUT_A_PRESSED) {
+        m->framesSinceA = 0;
+    } else if (m->framesSinceA < 0xFF) {
+        m->framesSinceA++;
+    }
+}
 void update_mario_joystick_inputs(MarioState *m) {
     Controller *controller = m->controller;
     controller->stickMag = sqrtf(controller->stickX * controller->stickX + controller->stickY * controller->stickY);
